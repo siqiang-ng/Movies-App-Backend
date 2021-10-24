@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>Home</title>
+  <style>
+    div {
+        margin-top: 5px;
+        margin-bottom: 10px;
+    }
+
+    h4 {
+        margin-left: 10px;
+    }
+
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }  
+    
+    .actions {
+        text-align: end;
+    }
+    
+    #create {
+        text-align:center;
+    }
+</style>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.1/css/bootstrap.min.css" integrity="sha384-VCmXjywReHh4PwowAiWNagnWcLhlEJLA5buUprzK8rxFgeH0kww/aWY76TfkUoSX" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+ </head>
+ <body>
+    <div class="container">   
+        {% for msg in messages%}
+        {% if msg.tags %}
+        <div class="alert alert-{{msg.tags}} alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{msg}}
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+     <div id="create">
+        <a href="{% url 'create' %}" class="btn btn-dark" role="button">Add a movie</a>
+     </div>
+    {% for movie in movies %}
+    <div class="card">
+        <div class="row">
+            <div class='col-sm-11'>
+                <a href="/movie/{{ movie.id }}/retrieve/" alt="Click to visit movie details">
+                    <h4> <b> {{ movie.movie_title }} </b> </h4>
+                </a>
+            </div>
+            <div class='col-sm-1'>
+                <div class="row">
+                    <a href="/movie/{{ movie.id }}/update/" class="btn btn-success" role="button">Edit</a>
+                    <a href="/movie/{{ movie.id }}/delete/" class="btn btn-danger" role="button" onclick="return confirm('Are you sure you want to delete this?')">Delete</a>
+                </div>
+
+            </div>
+        </div>
+        <div class="panel panel-primary">
+            <div class='panel-body'>
+                <img src="{{ movie.poster_url }}" class='img-responsive center' width=300 height=400>
+            </div>
+        </div>
+    </div>
+    <br>
+    {% endfor %}
+ </body>
+</html>
