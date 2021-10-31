@@ -1,48 +1,52 @@
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from django.contrib import messages
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.parsers import JSONParser
 
 from .models import Movie
-from .forms import MovieForm
+from .serializers import MovieSerializer
 
+@csrf_exempt
 def index(request):
-    latest_movie_list = Movie.objects.all()
-    return render(request, 'movie/index.html', {'movies': latest_movie_list})
+    if request.method == "GET" :
+        latest_movie_list = Movie.objects.all()
+        serializer = MovieSerializer(latest_movie_list, many=True)
+        return JsonResponse(serializer.data, safe=False)
 
-def create(request):
-    form = MovieForm()
+    elif request.method == "POST" :
+        data = JSONParser().parse(request)
+        serializer = MovieSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        return JsonResponse(serializer.errors, status=400)
 
-    if request.method == "POST":
-        form = MovieForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Movie has been added successfully!")
-        else: 
-            messages.error(request, "Movie has not been added")
-        return redirect('index')
+@csrf_exempt
+def handleMovieRequest(request, movie_id) :
+    
+    movie = get_object_or_404(Movie, pk=movie_id)
 
-    return render(request, 'movie/form.html', {'form': form})
+    if request.method == "GET" :
+        return retrieve(movie)
 
-def update(request, movie_id):
-    movie = Movie.objects.get(pk=movie_id)
+    elif request.method == "PUT" :
+        data = JSONParser().parse(request)
+        return update(movie, data)
 
-    if request.method == "POST":
-        form = MovieForm(request.POST, instance=movie)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Movie has been edited successfully!")
-            return redirect('retrieve', movie_id=movie.id)
-    else :
-        form = MovieForm(instance=movie)
+    elif request.method == "DELETE" :
+        return delete(movie)
 
-    return render(request, 'movie/edit.html', {'form': form})
+def retrieve(movie):
+    serializer = MovieSerializer(movie)
+    return JsonResponse(serializer.data)
 
-def retrieve(request, movie_id):
-    movie = Movie.objects.get(pk=movie_id)
-    return render(request, 'movie/movie.html', {'movie': movie})
+def update(movie, data):
+    serializer = MovieSerializer(movie, data=data)
+    if serializer.is_valid():
+        serializer.save()
+        return JsonResponse(serializer.data)
+    return JsonResponse(serializer.errors, status=400)
 
-def delete(request, movie_id):
-    movie = Movie.objects.get(pk=movie_id)
+def delete(movie):
     movie.delete()
-    messages.success(request, "Movie has been deleted successfully!")
-    return redirect('index')
+    return HttpResponse(status=204)
